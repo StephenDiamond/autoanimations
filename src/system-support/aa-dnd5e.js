@@ -51,14 +51,17 @@ export function systemHooks() {
             const overrideNames = activity?.name && !["heal", "summon"].includes(activity?.name?.trim()) ? [activity.name] : [];
             damageV2(await getRequiredData({item, actor: item.parent, workflow: item, rollDamageHook: {item, roll}, spellLevel: roll?.data?.item?.level ?? void 0, overrideNames}));
         });
-        Hooks.on('dnd5e.postUseActivity', async (activity, usageConfig, results) => {
-            if (["circle", "cone", "cube", "cylinder", "line", "sphere", "square", "wall"].includes(activity?.target?.template?.type) || activity?.type == "attack" || (activity?.damage?.parts?.length && activity?.type != "heal")) { return; }
+        Hooks.on('dnd5e.postUseActivity', (activity, usageConfig, results) => {
+            if (["circle", "cone", "cube", "cylinder", "line", "sphere", "square", "wall"].includes(activity?.target?.template?.type) || activity?.type == "attack" || (activity?.damage?.parts?.length && activity?.type != "heal")) {
+               if (game.modules.get("ready-set-roll-5e")?.active) return false; 
+               return true;
+            }
             const config = usageConfig;
             const options = results;
             const item = activity?.parent?.parent;
             const overrideNames = activity?.name && !["heal", "summon"].includes(activity?.name?.trim()) ? [activity.name] : [];
             useItem(await getRequiredData({item, actor: item.parent, workflow: item, useItemHook: {item, config, options}, spellLevel: options?.flags?.dnd5e?.use?.spellLevel || void 0, overrideNames}));
-            if (game.modules.get("ready-set-roll-5e")?.active) return true;
+            if (game.modules.get("ready-set-roll-5e")?.active) return false;
         });
         Hooks.on("dnd5e.preCreateActivityTemplate", async (activity, templateData) => {
             templateData.flags.autoanimations = {
